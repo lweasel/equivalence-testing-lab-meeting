@@ -340,7 +340,7 @@ print(prior_posterior_plot)
 ```{r include=FALSE}
 bm <- brm(
   Value ~ Genotype,
-  data = additional_genotype_example_data,
+  data = genotype_example_data,
   prior = prior(normal(0, 5), class = "b"),
   iter = 10000,
 )
@@ -355,18 +355,24 @@ posterior_summary(bm)
 :::{.justify}
 ```{r, fig.width=9, fig.height=7}
 post <- posterior_samples(bm, pars = "b_GenotypeMutant")
+density_estimate <- density(post$b_GenotypeMutant, n = 1024)
+
+density_df <- tibble(
+  b_GenotypeMutant = density_estimate$x,
+  density = density_estimate$y
+)
 
 rope_low  <- -2
 rope_high <-  2
 
-posterior_draws_plot <- ggplot(post, aes(x = b_GenotypeMutant)) +
-  geom_density() +
+posterior_draws_plot <- ggplot(density_df, aes(x = b_GenotypeMutant, y = density)) +
+  geom_line(linewidth = 1.2) +
   geom_vline(xintercept = 0, linetype = "solid", colour = "grey") +
   labs(
     x = "Mutant vs Wild type mean difference",
     y = "Density"
   ) +
-  xlim(-2.1, 2.1) +
+  xlim(-2.5, 2.5) +
   theme_classic() +
   theme(
     axis.text = element_text(size = 18),
@@ -382,13 +388,15 @@ print(posterior_draws_plot)
 :::{.justify}
 ```{r, fig.width=9, fig.height=7}
 posterior_draws_plot <- posterior_draws_plot +
-    geom_vline(xintercept = c(rope_low, rope_high), linetype = "dashed", color = "red") +
   geom_area(
-    data = subset(post, b_GenotypeMutant > rope_low & b_GenotypeMutant < rope_high),
-    aes(x = b_GenotypeMutant),
-    stat = "density",
+    data = density_df %>% filter(b_GenotypeMutant >= rope_low, b_GenotypeMutant <= rope_high),
+    aes(x = b_GenotypeMutant, y = density),
+    inherit.aes = FALSE,
+    fill = "grey",
     alpha = 0.3
-  )
+  ) +
+  geom_line(linewidth = 1.2) +
+  geom_vline(xintercept = c(rope_low, rope_high), linetype = "dashed", color = "red")
 
 print(posterior_draws_plot)
 ```
@@ -403,8 +411,8 @@ print(p_rope(post$b_GenotypeMutant, range = c(-2, 2)))
 ##  {#slide22a-id data-menu-title="Slide 22a"}
 
 ::: {.r-fit-text .absolute top=200}
-"The posterior mean (of the genotype effect) is approximately 1.26 with a 95% credible interval of approximately 0.88 to 1.62. ROPE
-analysis indicates that over 99.9% of the posterior distribution for the genotype effect falls within the equivalence bounds of
+"The posterior mean (of the genotype effect) is approximately 0.92 with a 95% credible interval of approximately -0.08 to 1.92. ROPE
+analysis indicates that approximately 98.3% of the posterior distribution for the genotype effect falls within the equivalence bounds of
 -2 to 2."
 :::
 
