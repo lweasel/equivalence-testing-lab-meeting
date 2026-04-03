@@ -1,0 +1,417 @@
+---
+title: "A (very brief) introduction to equivalence testing"
+author: Owen
+date: "2026-04-09"
+date-format: long
+df-print: kable
+format: 
+  revealjs:
+    logo: logo.svg
+    footer: "Introduction to equivalence testing"
+---
+
+##  {#slide1-id data-menu-title="Slide 1"}
+
+```{css, echo = FALSE}
+.justify {
+  text-align: center
+}
+```
+
+```{r, echo = FALSE}
+library(ggplot2)
+library(dplyr)
+library(magrittr)
+library(tibble)
+library(TOSTER)
+library(brms)
+library(bayestestR)
+```
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7} 
+set.seed(42)
+
+mean_wt <- 10
+mean_mutant <- 11.4
+
+genotype_example_data <- tibble(
+  Genotype = rep(c("Wild type", "Mutant"), each = 24),
+  Value = c(
+    rnorm(n = 24, mean = mean_wt, sd = 1.5),
+    rnorm(n = 24, mean = mean_mutant, sd = 1.5)
+  )
+)
+
+genotype_example_data$Genotype %<>% factor() %>% relevel("Wild type")
+
+genotype_t_test <- t.test(Value ~ Genotype, data = genotype_example_data)
+p_value_label <- paste0("p = ", format.pval(genotype_t_test$p.value, digits = 2, eps = 0.001))
+y_position <- max(genotype_example_data$Value) + 0.6
+
+basic_plot <- genotype_example_data %>%
+  ggplot(aes(x = Genotype, y = Value)) +
+  geom_point(
+    position = position_jitter(width = 0.12, height = 0, seed = 42),
+    size = 2,
+    alpha = 0.85
+  ) +
+  xlab(NULL) +
+  ylab("Very important variable") +
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 18),
+    axis.title = element_text(size = 24)
+  )
+
+basic_plot_p_vals <- basic_plot +
+  annotate("segment", x = 1, xend = 2, y = y_position, yend = y_position) +
+  annotate("segment", x = 1, xend = 1, y = y_position - 0.2, yend = y_position) +
+  annotate("segment", x = 2, xend = 2, y = y_position - 0.2, yend = y_position) +
+  annotate("text", x = 1.5, y = y_position + 0.4, label = p_value_label, size = 7)
+
+
+print(basic_plot_p_vals)
+```
+:::
+
+## {#slide2-id data-menu-title="Slide 2"}
+
+::: {.incremental}
+- **Scientist**: There is no difference between the wild type and mutant genotypes.
+- **Reviewer**: But you haven't really shown that. What you have shown is that _assuming the null hypothesis of no difference between genotypes_, you would expect to see a difference as extreme as the one you observed (or more extreme) 7.5% of the time. That's not the same as showing there is no difference between genotypes.
+- **Scientist**: ☹️
+:::
+
+##  {#slide3-id data-menu-title="Slide 3"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7}
+additional_genotype_example_data <- tibble(
+  Genotype = rep(c("Wild type", "Mutant"), each = 96),
+  Value = c(
+    rnorm(n = 96, mean = 10, sd = 1.5),
+    rnorm(n = 96, mean = 11.4, sd = 1.5)
+  )
+)
+
+additional_genotype_example_data$Genotype %<>% factor() %>% relevel("Wild type")
+
+additional_genotype_example_data %<>% rbind(genotype_example_data) 
+
+genotype_t_test <- t.test(Value ~ Genotype, data = additional_genotype_example_data)
+p_value_label <- paste0("p = ", format.pval(genotype_t_test$p.value, digits = 2, eps = 0.001))
+y_position <- max(additional_genotype_example_data$Value) + 0.6
+
+additional_data_plot <- additional_genotype_example_data %>%
+  ggplot(aes(x = Genotype, y = Value)) +
+  geom_point(
+    position = position_jitter(width = 0.12, height = 0, seed = 42),
+    size = 2,
+    alpha = 0.85
+  ) +
+  xlab(NULL) +
+  ylab("Very important variable") +
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 18),
+    axis.title = element_text(size = 24)
+  )
+
+hidden_text <- additional_data_plot + 
+  annotate("segment", x = 1, xend = 2, y = y_position, yend = y_position, color = "white") +
+  annotate("segment", x = 1, xend = 1, y = y_position - 0.2, yend = y_position, color = "white") +
+  annotate("segment", x = 2, xend = 2, y = y_position - 0.2, yend = y_position, color = "white") +
+  annotate("text", x = 1.5, y = y_position + 0.4, label = p_value_label, size = 7, color = "white")
+
+
+print(hidden_text)
+```
+:::
+
+##  {#slide3a-id data-menu-title="Slide 3a"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7}
+additional_data_plot <- additional_data_plot +
+  annotate("segment", x = 1, xend = 2, y = y_position, yend = y_position) +
+  annotate("segment", x = 1, xend = 1, y = y_position - 0.2, yend = y_position) +
+  annotate("segment", x = 2, xend = 2, y = y_position - 0.2, yend = y_position) +
+  annotate("text", x = 1.5, y = y_position + 0.4, label = p_value_label, size = 7)
+  
+print(additional_data_plot)
+```
+:::
+
+##  {#slide4-id data-menu-title="Slide 4"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7}
+additional_data_plot <- additional_data_plot + 
+  annotate("segment", x = 0.8, xend = 1.2, y = mean_wt, yend = mean_wt, colour = "red", linewidth = 1.2) +
+  annotate("segment", x = 1.8, xend = 2.2, y = mean_mutant, yend = mean_mutant, colour = "red", linewidth = 1.2)
+ 
+print(additional_data_plot)
+```
+:::
+
+##  {#slide5-id data-menu-title="Slide 5"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7}
+additional_data_plot <- additional_data_plot + ylim(0, 16)
+print(additional_data_plot)
+```
+:::
+
+##  {#slide6-id data-menu-title="Slide 6"}
+
+::: {.r-fit-text .absolute top=200}
+Is this difference small enough to be of no _practical_ significance?
+:::
+
+##  {#slide7-id data-menu-title="Slide 7"}
+
+::: {.incremental}
+- Q: Could the true difference be bigger than what we’d consider negligible?
+  - "TOST": "two one-sided t-tests"
+  - frequentist
+- Q: Given the data, how likely is it that the difference is negligible?
+  - "ROPE": "region of practical equivalence"
+  - Bayesian (😱)
+- in _either_ case, we must define what counts as "no practical difference"
+:::
+
+##  {#slide8-id data-menu-title="Slide 8"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7}
+print(basic_plot)
+```
+:::
+
+##  {#slide9-id data-menu-title="Slide 9"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7}
+real_mean_wt <- genotype_example_data %>% filter(Genotype == "Wild type") %>% pull(Value) %>% mean()
+
+basic_plot_equivalence <- basic_plot +
+  annotate("segment", x = 0.8, xend = 1.2, y = real_mean_wt, yend = real_mean_wt, colour = "red", linewidth = 1.2)
+
+print(basic_plot_equivalence)
+```
+:::
+
+##  {#slide10-id data-menu-title="Slide 10"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7}
+basic_plot_equivalence <- basic_plot_equivalence +
+  geom_hline(yintercept = real_mean_wt + 2, colour = "red", linetype = "dashed") +
+  geom_hline(yintercept = real_mean_wt - 2, colour = "red", linetype = "dashed")
+
+print(basic_plot_equivalence)
+```
+:::
+
+##  {#slide11-id data-menu-title="Slide 11"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7}
+real_mean_mutant <- genotype_example_data %>% filter(Genotype == "Mutant") %>% pull(Value) %>% mean()
+
+basic_plot_equivalence <- basic_plot_equivalence +
+  annotate("segment", x = 1.8, xend = 2.2, y = real_mean_mutant, yend = real_mean_mutant, colour = "blue", linewidth = 1.2)
+
+print(basic_plot_equivalence)
+```
+:::
+
+##  {#slide12-id data-menu-title="Slide 12"}
+
+```{r}
+tost_one = t_TOST(formula = Value ~ Genotype,
+                  data = genotype_example_data,
+                  paired = TRUE,
+                  eqb = 2) #equivalence bounds of +/- 2 units
+
+print(tost_one) 
+```
+
+##  {#slide13-id data-menu-title="Slide 13"}
+
+::: {.r-fit-text .absolute top=200}
+"Using the paired t-test, a null hypothesis significance test (NHST), and an equivalence test, via two one-sided tests (TOST), were performed with an alpha-level of 0.05. These tested the null hypotheses that true mean difference is equal to 0 (NHST), and true mean difference is more extreme than -2 and 2 (TOST). The equivalence test was significant, t(23) = 2.236, p = 0.018 (mean difference = -0.925 90% C.I.[-1.75, -0.102]). At the desired error rate, it can be stated that the true mean difference is between -2 and 2.", 
+:::
+
+##  {#slide14-id data-menu-title="Slide 14"}
+
+::: {.incremental}
+- Under the null hypothesis that the true difference is greater than 2, you would expect to see a difference (Mutant vs Wild type) as small in magnitude as the one that you have observed (or smaller) around 2% of the time.
+- Under the null hypothesis that the true difference is less than -2, you would expect to see a difference (Mutant vs Wild type) as large in magnitude as the one that you have observed (or larger) less than 0.1% of the time.
+- Under the null hypothesis of _no_ difference you would expect to see a difference as extreme as the one you observed (or more extreme) 7.5% of the time.
+:::
+
+##  {#slide15-id data-menu-title="Slide 15"}
+
+::: {.r-fit-text .absolute top=200}
+How likely is it that the difference is negligible?
+:::
+
+##  {#slide16-id data-menu-title="Slide 16"}
+
+:::{.justify}
+```{r, fig.width=9, fig.height=7}
+prior_distribution_data <- tibble(
+  mean_difference = seq(-20, 20, length.out = 400),
+  density = dnorm(mean_difference, mean = 0, sd = 5)
+)
+
+prior_distribution_data %>%
+  ggplot(aes(x = mean_difference, y = density)) +
+  geom_line(linewidth = 1.2) +
+  ylim(0, 0.4)+
+  xlab("Mutant vs Wild type mean difference") +
+  ylab("Density") +
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 18),
+    axis.title = element_text(size = 24)
+  )
+```
+:::
+
+##  {#slide17-id data-menu-title="Slide 17"}
+
+:::{.justify}
+```{r, fig.width=9, fig.height=7}
+posterior_distribution_data <- tibble(
+  mean_difference = seq(-20, 20, length.out = 400),
+  density = dnorm(mean_difference, mean = 1.4, sd = 1)
+)
+
+prior_posterior_plot <- prior_distribution_data %>% ggplot(aes(x = mean_difference, y = density)) +
+  geom_line(linewidth = 1.2, colour="grey") +
+  geom_line(data=posterior_distribution_data, linewidth = 1.2) +
+  ylim(0, 0.4)+
+  xlab("Mutant vs Wild type mean difference") +
+  ylab("Density") +
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 18),
+    axis.title = element_text(size = 24)
+  )
+
+print(prior_posterior_plot)
+```
+:::
+
+##  {#slide18-id data-menu-title="Slide 18"}
+
+:::{.justify}
+```{r, fig.width=9, fig.height=7}
+prior_posterior_plot <- prior_posterior_plot +
+  geom_vline(xintercept = -2, colour = "red", linetype = "dashed") +
+  geom_vline(xintercept = 2, colour = "red", linetype = "dashed")
+
+print(prior_posterior_plot)
+```
+:::
+
+##  {#slide18a-id data-menu-title="Slide 18a"}
+:::{.justify}
+```{r, fig.width=9, fig.height=7}
+prior_posterior_plot <- prior_posterior_plot +
+  geom_area(
+    data = posterior_distribution_data %>% filter(mean_difference >= -2, mean_difference <= 2),
+    aes(x = mean_difference, y = density),
+    inherit.aes = FALSE,
+    fill = "grey",
+    alpha = 0.4
+  )
+
+print(prior_posterior_plot)
+```
+:::
+
+##  {#slide19-id data-menu-title="Slide 19"}
+
+```{r include=FALSE}
+bm <- brm(
+  Value ~ Genotype,
+  data = additional_genotype_example_data,
+  prior = prior(normal(0, 5), class = "b"),
+  iter = 10000,
+)
+```
+
+```{r}
+posterior_summary(bm)
+```
+
+##  {#slide20-id data-menu-title="Slide 20"}
+
+:::{.justify}
+```{r, fig.width=9, fig.height=7}
+post <- posterior_samples(bm, pars = "b_GenotypeMutant")
+
+rope_low  <- -2
+rope_high <-  2
+
+posterior_draws_plot <- ggplot(post, aes(x = b_GenotypeMutant)) +
+  geom_density() +
+  geom_vline(xintercept = 0, linetype = "solid", colour = "grey") +
+  labs(
+    x = "Mutant vs Wild type mean difference",
+    y = "Density"
+  ) +
+  xlim(-2.1, 2.1) +
+  theme_classic() +
+  theme(
+    axis.text = element_text(size = 18),
+    axis.title = element_text(size = 24)
+  )
+
+print(posterior_draws_plot)
+```
+:::
+
+##  {#slide21-id data-menu-title="Slide 21"}
+
+:::{.justify}
+```{r, fig.width=9, fig.height=7}
+posterior_draws_plot <- posterior_draws_plot +
+    geom_vline(xintercept = c(rope_low, rope_high), linetype = "dashed", color = "red") +
+  geom_area(
+    data = subset(post, b_GenotypeMutant > rope_low & b_GenotypeMutant < rope_high),
+    aes(x = b_GenotypeMutant),
+    stat = "density",
+    alpha = 0.3
+  )
+
+print(posterior_draws_plot)
+```
+:::
+
+##  {#slide22-id data-menu-title="Slide 22"}
+
+```{r}
+print(p_rope(post$b_GenotypeMutant, range = c(-2, 2)))
+```
+
+##  {#slide22a-id data-menu-title="Slide 22a"}
+
+::: {.r-fit-text .absolute top=200}
+"The posterior mean (of the genotype effect) is approximately 1.26 with a 95% credible interval of approximately 0.88 to 1.62. ROPE
+analysis indicates that over 99.9% of the posterior distribution for the genotype effect falls within the equivalence bounds of
+-2 to 2."
+:::
+
+##  {#slide23-id data-menu-title="Slide 23"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7}
+print(basic_plot)
+```
+:::
