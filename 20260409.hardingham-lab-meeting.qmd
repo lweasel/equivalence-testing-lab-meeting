@@ -27,11 +27,6 @@ library(TOSTER)
 library(brms)
 library(bayestestR)
 
-set.seed(42)
-
-mean_wt <- 10
-mean_mutant <- 11.4
-
 generate_example_data <- function(n_per_group, mean_wt, mean_mutant, sd) {
   data <- tibble(
     Genotype = rep(c("Wild type", "Mutant"), each = n_per_group),
@@ -57,8 +52,12 @@ add_p_val <- function(plot, y_pos, lab, col="black") {
 
 :::{.justify}
 ```{r, fig.width=7, fig.height=7} 
+set.seed(42)
 
-genotype_example_data <- generate_example_data(24, mean_wt, mean_mutant, 1.5)
+MEAN_WT <- 10
+MEAN_MUTANT <- 11.4
+
+genotype_example_data <- generate_example_data(24, MEAN_WT, MEAN_MUTANT, 1.5)
 
 genotype_t_test <- t.test(Value ~ Genotype, data = genotype_example_data)
 p_value_label <- paste0("p = ", format.pval(genotype_t_test$p.value, digits = 2, eps = 0.001))
@@ -96,7 +95,7 @@ basic_plot_p_vals %>% print()
 
 :::{.justify}
 ```{r, fig.width=7, fig.height=7}
-additional_genotype_example_data <- generate_example_data(96, mean_wt, mean_mutant, 1.5) %>% 
+additional_genotype_example_data <- generate_example_data(96, MEAN_WT, MEAN_MUTANT, 1.5) %>% 
   rbind(genotype_example_data) 
 
 genotype_t_test <- t.test(Value ~ Genotype, data = additional_genotype_example_data)
@@ -137,8 +136,8 @@ additional_data_plot %>% print()
 :::{.justify}
 ```{r, fig.width=7, fig.height=7}
 additional_data_plot <- additional_data_plot + 
-  annotate("segment", x = 0.8, xend = 1.2, y = mean_wt, yend = mean_wt, colour = "red", linewidth = 1.2) +
-  annotate("segment", x = 1.8, xend = 2.2, y = mean_mutant, yend = mean_mutant, colour = "red", linewidth = 1.2)
+  annotate("segment", x = 0.8, xend = 1.2, y = MEAN_WT, yend = MEAN_WT, colour = "red", linewidth = 1.2) +
+  annotate("segment", x = 1.8, xend = 2.2, y = MEAN_MUTANT, yend = MEAN_MUTANT, colour = "red", linewidth = 1.2)
  
 additional_data_plot %>% print()
 ```
