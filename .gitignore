@@ -2,3 +2,4 @@
 *.Rproj
 *.html
 *_files/*
+.Rproj.user

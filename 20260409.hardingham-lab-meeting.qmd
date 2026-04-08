@@ -87,11 +87,19 @@ basic_plot_p_vals %>% print()
 
 ::: {.incremental}
 - **Scientist**: There is no difference between the wild type and mutant genotypes.
-- **Reviewer**: But you haven't really shown that. What you have shown is that _assuming the null hypothesis of no difference between genotypes_, you would expect to see a difference as extreme as the one you observed (or more extreme) 7.5% of the time. That's not the same as showing there is no difference between genotypes.
+- **Reviewer**: But you haven't really shown that. What you have shown is that _assuming the null hypothesis of no difference between genotypes is true_, you would only expect to see a difference as extreme as the one you observed (or more extreme) 7.5% of the time. That's not the same as showing there is no difference between genotypes.
 - **Scientist**: ☹️
 :::
 
 ##  {#slide3-id data-menu-title="Slide 3"}
+
+:::{.justify}
+```{r, fig.width=7, fig.height=7} 
+basic_plot_p_vals %>% print()
+```
+:::
+
+##  {#slide3a-id data-menu-title="Slide 3a"}
 
 :::{.justify}
 ```{r, fig.width=7, fig.height=7}
@@ -121,7 +129,7 @@ additional_data_plot %>% add_p_val(y_position, p_value_label, col = "white") %>%
 ```
 :::
 
-##  {#slide3a-id data-menu-title="Slide 3a"}
+##  {#slide3b-id data-menu-title="Slide 3b"}
 
 :::{.justify}
 ```{r, fig.width=7, fig.height=7}
@@ -229,7 +237,7 @@ t_TOST(formula = Value ~ Genotype,
 ##  {#slide13-id data-menu-title="Slide 13"}
 
 ::: {.r-fit-text .absolute top=200}
-"Using the paired t-test, a null hypothesis significance test (NHST), and an equivalence test, via two one-sided tests (TOST), were performed with an alpha-level of 0.05. These tested the null hypotheses that true mean difference is equal to 0 (NHST), and true mean difference is more extreme than -2 and 2 (TOST). The equivalence test was significant, t(23) = 2.236, p = 0.018 (mean difference = -0.925 90% C.I.[-1.75, -0.102]). At the desired error rate, it can be stated that the true mean difference is between -2 and 2.", 
+"Using the paired t-test, a null hypothesis significance test (NHST), and an equivalence test, via two one-sided tests (TOST), were performed with an alpha-level of 0.05. These tested the null hypotheses that true mean difference is equal to 0 (NHST), and true mean difference is more extreme than -2 and 2 (TOST). The equivalence test was significant, t(23) = 2.236, p = 0.018 (mean difference = -0.925 90% C.I.[-1.75, -0.102]). At the desired error rate, it can be stated that the true mean difference is between -2 and 2."
 :::
 
 ##  {#slide14-id data-menu-title="Slide 14"}
