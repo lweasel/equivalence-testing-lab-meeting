@@ -230,14 +230,14 @@ basic_plot_equivalence %>% print()
 ```{r}
 t_TOST(formula = Value ~ Genotype,
        data = genotype_example_data,
-       paired = TRUE,
+       paired = FALSE,
        eqb = 2) %>% print()
 ```
 
 ##  {#slide13-id data-menu-title="Slide 13"}
 
 ::: {.r-fit-text .absolute top=200}
-"Using the paired t-test, a null hypothesis significance test (NHST), and an equivalence test, via two one-sided tests (TOST), were performed with an alpha-level of 0.05. These tested the null hypotheses that true mean difference is equal to 0 (NHST), and true mean difference is more extreme than -2 and 2 (TOST). The equivalence test was significant, t(23) = 2.236, p = 0.018 (mean difference = -0.925 90% C.I.[-1.75, -0.102]). At the desired error rate, it can be stated that the true mean difference is between -2 and 2."
+"Using the Welch Two Sample t-test, a null hypothesis significance test (NHST), and a equivalence test, via two one-sided tests (TOST), were performed with an alpha-level of 0.05. These tested the null hypotheses that true mean difference is equal to 0 (NHST), and true mean difference is more extreme than -2 and 2 (TOST). The equivalence test was significant, t(44.208) = 2.118, p = 0.02 (mean difference = -0.925 90% C.I.[-1.78, -0.0731]). At the desired error rate, it can be stated that the true mean difference is between -2 and 2."
 :::
 
 ##  {#slide14-id data-menu-title="Slide 14"}
